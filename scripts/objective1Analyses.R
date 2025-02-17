@@ -1,6 +1,7 @@
+library(ggspatial)
 library(tidyverse)
 
-dat <- read_csv("./allResults.csv") %>% 
+dat <- read_csv("./data/allResults.csv") %>% 
   filter(obj == 1)
 
 dat %>% 
@@ -48,4 +49,18 @@ dat %>%
             n90percentile = quantile(pg_L, probs = 0.9))
 
 
+#### Map making ####
+spatialData <- st_as_sf(dat, coords = c("long", "lat"), crs = 4326)
+wisconsin <- read_sf("../Wisconsin_State_Boundary_24K/Wisconsin_State_Boundary_24K.shp")
+wisconsin <- st_transform(wisconsin, 4326) # Transform to WGS 84
 
+spatialData %>% 
+  ggplot() +
+  geom_sf(data = wisconsin) +
+  geom_sf(aes(color = log10(pg_L+1)), size = 3) +
+  scale_color_gradientn(colors = c("blue", "red")) +# Apply the gradient
+  coord_sf(xlim = c(-88.1, -87.3), ylim = c(44.5, 45.2), expand = FALSE) +
+  annotation_scale(location = "tl", bar_cols = c("black", "white")) +
+  annotation_north_arrow(location = "br") +
+  theme_minimal() +
+  theme(panel.grid=element_blank(), axis.ticks.length = unit(0, "pt"))
