@@ -4,6 +4,8 @@ library(tidyverse)
 dat <- read_csv("./data/allResults.csv") %>% 
   filter(obj == 1)
 
+### Variation by  latitude? ###
+## Note: excluding 1 outlier (3000 pg/L)
 dat %>% 
   filter(pg_L < 1000) %>% 
   ggplot(aes(x = pg_L, y = long)) +
@@ -11,6 +13,9 @@ dat %>%
   geom_smooth(method = lm) +
   theme_bw()
 
+
+### Histogram of ambient eDNA concentrations ###
+## Note: excluding 1 outlier (3000 pg/L)
 dat %>% 
   filter(pg_L < 1000) %>% 
   ggplot(aes(x = pg_L)) +
@@ -21,6 +26,9 @@ dat %>%
   theme_bw()
 #ggsave("./outputs/obj1ConcentrationHistogram.png", width = 6, height = 4)
 
+
+### Ambient eDNA concentrations by month ###
+## Note: excluding 1 outlier (3000 pg/L)
 dat %>% 
   mutate(date = mdy(date)) %>% 
   mutate(month = month(date, label = TRUE)) %>% 
@@ -32,13 +40,6 @@ dat %>%
   ggtitle("Objective 1: Ambient Green Bay eDNA concentration") +
   theme_bw()
 ggsave("./outputs/obj1ConcentrationByMonth.png", width = 6, height = 4)
-
-
-dat %>% 
-  mutate(date = mdy(date)) %>% 
-  mutate(month = month(date, label = TRUE)) %>% 
-  filter(pg_L < 1000) %>% 
-  count(month)
 
 
 ### Mean and variance of ambient concentration ###

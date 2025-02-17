@@ -44,7 +44,7 @@ dat %>%
 #ggsave("./outputs/obj2ConcentrationRelativeToAmbient.png", width = 6, height = 4)
 
 
-### Make maps
+### Make maps ###
 spatialData <- st_as_sf(dat, coords = c("long", "lat"), crs = 4326)
 wisconsin <- read_sf("../Wisconsin_State_Boundary_24K/Wisconsin_State_Boundary_24K.shp")
 wisconsin <- st_transform(wisconsin, 4326) # Transform to WGS 84
