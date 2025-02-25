@@ -26,6 +26,26 @@ dat <- read_csv("./data/allResults.csv") %>%
                               net == "c" ~ "central"))
 
   
+### Modeling data for Zach
+harvest <- read_csv("data/harvest_records.csv")
+dat %>% 
+  mutate(distance = as.double(distance)) %>% 
+  mutate(distanceEW = case_when(direction %in% c("N", "S") ~ 0,
+                                direction == "W" ~ distance*-1,
+                                direction == "E" ~ distance,
+                                direction %in% c("NE", "SE") ~ distance*cos(45*pi/180),
+                                direction %in% c("NW", "SW") ~ (distance*cos(45*pi/180))*-1)) %>% 
+  mutate(distanceNS = case_when(direction %in% c("E", "W") ~ 0,
+                                direction == "S" ~ distance*-1,
+                                direction == "N" ~ distance,
+                                direction %in% c("NE", "NW") ~ distance*cos(45*pi/180),
+                                direction %in% c("SW", "SE") ~ (distance*cos(45*pi/180))*-1)) %>% 
+  select(date, pg_L, net, distanceEW, distanceNS) %>% 
+  left_join(harvest, join_by(net, date == eDNA_sampling_date)) %>% 
+  select(-Nearest_net_lift_date) %>% 
+  drop_na(Catch_lbs) %>% 
+  write.csv("./data/modelingData.csv")
+
 ### Histogram of eDNA concentrations around nets ###
 dat %>% 
   ggplot(aes(x = pg_L)) +
