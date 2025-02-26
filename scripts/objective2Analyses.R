@@ -3,6 +3,7 @@ library(ggspatial)
 library(rnaturalearth)
 library(rnaturalearthdata)
 library(tigris)
+library(patchwork)
 library(viridis)
 library(tidyverse)
 
@@ -26,25 +27,25 @@ dat <- read_csv("./data/allResults.csv") %>%
                               net == "c" ~ "central"))
 
   
-### Modeling data for Zach
-harvest <- read_csv("data/harvest_records.csv")
-dat %>% 
-  mutate(distance = as.double(distance)) %>% 
-  mutate(distanceEW = case_when(direction %in% c("N", "S") ~ 0,
-                                direction == "W" ~ distance*-1,
-                                direction == "E" ~ distance,
-                                direction %in% c("NE", "SE") ~ distance*cos(45*pi/180),
-                                direction %in% c("NW", "SW") ~ (distance*cos(45*pi/180))*-1)) %>% 
-  mutate(distanceNS = case_when(direction %in% c("E", "W") ~ 0,
-                                direction == "S" ~ distance*-1,
-                                direction == "N" ~ distance,
-                                direction %in% c("NE", "NW") ~ distance*cos(45*pi/180),
-                                direction %in% c("SW", "SE") ~ (distance*cos(45*pi/180))*-1)) %>% 
-  select(date, pg_L, net, distanceEW, distanceNS) %>% 
-  left_join(harvest, join_by(net, date == eDNA_sampling_date)) %>% 
-  select(-Nearest_net_lift_date) %>% 
-  drop_na(Catch_lbs) %>% 
-  write.csv("./data/modelingData.csv")
+# ### Modeling data for Zach
+# harvest <- read_csv("data/harvest_records.csv")
+# dat %>% 
+#   mutate(distance = as.double(distance)) %>% 
+#   mutate(distanceEW = case_when(direction %in% c("N", "S") ~ 0,
+#                                 direction == "W" ~ distance*-1,
+#                                 direction == "E" ~ distance,
+#                                 direction %in% c("NE", "SE") ~ distance*cos(45*pi/180),
+#                                 direction %in% c("NW", "SW") ~ (distance*cos(45*pi/180))*-1)) %>% 
+#   mutate(distanceNS = case_when(direction %in% c("E", "W") ~ 0,
+#                                 direction == "S" ~ distance*-1,
+#                                 direction == "N" ~ distance,
+#                                 direction %in% c("NE", "NW") ~ distance*cos(45*pi/180),
+#                                 direction %in% c("SW", "SE") ~ (distance*cos(45*pi/180))*-1)) %>% 
+#   select(date, pg_L, net, distanceEW, distanceNS) %>% 
+#   left_join(harvest, join_by(net, date == eDNA_sampling_date)) %>% 
+#   select(-Nearest_net_lift_date) %>% 
+#   drop_na(Catch_lbs) %>% 
+#   write.csv("./data/modelingData.csv")
 
 ### Histogram of eDNA concentrations around nets ###
 dat %>% 
@@ -71,42 +72,44 @@ wisconsin <- st_transform(wisconsin, 4326) # Transform to WGS 84
 
 # WestNet
 spatialData.West <- spatialData %>% filter(net == "west")
-spatialData.West %>% 
+west.plot <- spatialData.West %>% 
   ggplot() +
   geom_sf(data = wisconsin) +
-  geom_sf(aes(color = sqrt(pg_L)), size = 3) +
+  geom_sf(aes(color = log10(pg_L+1)), size = 3) +
   scale_color_gradientn(colors = c("blue", "red")) +
   coord_sf(xlim = c(-87.61, -87.55), ylim = c(44.85, 44.89), expand = FALSE) +
   ggtitle("West net") + 
   theme_minimal() +
-  theme(panel.grid=element_blank(), axis.ticks.length = unit(0, "pt"))
+  theme(panel.grid=element_blank(), axis.ticks.length = unit(0, "pt")) + 
+  labs(color = expression(Log[10](pg/L)))
 
 # CentralNet
 spatialData.Central <- spatialData %>% filter(net == "central")
-spatialData.Central %>% 
+central.plot <- spatialData.Central %>% 
   ggplot() +
   geom_sf(data = wisconsin) +
-  geom_sf(aes(color = sqrt(pg_L)), size = 2.5) +
+  geom_sf(aes(color = log10(pg_L+1)), size = 2.5) +
   scale_color_gradientn(colors = c("blue", "red")) +
   coord_sf(xlim = c(-87.54, -87.46), ylim = c(44.87, 44.92), expand = FALSE) +
-  facet_wrap(~date) +
+  facet_wrap(~date, ncol = 2) +
   ggtitle("Central net") + 
   theme_minimal() +
-  theme(panel.grid=element_blank(), axis.ticks.length = unit(0, "pt"))
+  theme(panel.grid=element_blank(), axis.ticks.length = unit(0, "pt")) + 
+  labs(color = expression(Log[10](pg/L)))
 
 # EastNet
 spatialData.East <- spatialData %>% filter(net == "east")
-spatialData.East %>% 
+east.plot <- spatialData.East %>% 
   ggplot() +
   geom_sf(data = wisconsin) +
-  geom_sf(aes(color = pg_L), size = 3) +
+  geom_sf(aes(color = log10(pg_L+1)), size = 3) +
   scale_color_gradientn(colors = c("blue", "red")) +
-  coord_sf(xlim = c(-87.44, -87.38), ylim = c(44.895, 44.94), expand = FALSE) +
+  coord_sf(xlim = c(-87.44, -87.395), ylim = c(44.895, 44.94), expand = FALSE) +
   facet_wrap(~date) +
   ggtitle("East net") + 
   theme_minimal() +
-  theme(panel.grid=element_blank(), axis.ticks.length = unit(0, "pt"))
+  theme(panel.grid=element_blank(), axis.ticks.length = unit(0, "pt")) + 
+  labs(color = expression(Log[10](pg/L)))
 
 
-
-
+central.plot | (west.plot / east.plot)

@@ -1,4 +1,9 @@
+library(sf)
 library(ggspatial)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(tigris)
+library(viridis)
 library(tidyverse)
 
 dat <- read_csv("./data/allResults.csv") %>% 
